@@ -83,7 +83,8 @@ for date in dates_sorted:
                 "display_server": display_server,
                 "race": p["race"],
                 "name": p["name"],
-                "points": p["points"]
+                "points": p["points"],
+                "position": p["position"]
             })
 
 # =====================
@@ -221,6 +222,7 @@ html += """
 <thead>
 <tr>
 <th>Joueur</th>
+<th>Position</th>
 <th>Serveur</th>
 <th>Race</th>
 <th>Score début</th>
@@ -242,66 +244,80 @@ function updateProgression() {
     const dateStart = document.getElementById('date_start').value;
     const dateEnd = document.getElementById('date_end').value;
 
-    const scores = {};
+    // Grouper les données par joueur + serveur
+    const playerServerMap = {};
+
     allData.forEach(p => {
-        const key = p.name + '||' + p.server + '||' + p.race;
-        if (!scores[key]) scores[key] = {};
-        scores[key][p.date] = p.points;
-        scores[key].display_server = p.display_server;
+        if (!selectedServers.includes(p.server)) return;
+
+        const key = p.name + '||' + p.server;
+        if (!playerServerMap[key]) {
+            playerServerMap[key] = {
+                name: p.name,
+                server: p.server,
+                display_server: p.display_server,
+                races: {},
+                positions: {},
+                startScore: 0,
+                endScore: 0
+            };
+        }
+
+        // Race et position pour les dates sélectionnées
+        if (p.date === dateStart) {
+            playerServerMap[key].races.start = p.race;
+            playerServerMap[key].startScore = p.points;
+            playerServerMap[key].positions.start = p.position;
+        }
+        if (p.date === dateEnd) {
+            playerServerMap[key].races.end = p.race;
+            playerServerMap[key].endScore = p.points;
+            playerServerMap[key].positions.end = p.position;
+        }
     });
 
-let tableData = [];
-// Grouper par joueur + serveur
-const playerServerMap = {};
+    // Construire le tableau à afficher
+    let tableData = [];
+    for (let key in playerServerMap) {
+        const p = playerServerMap[key];
 
-for (let key in scores) {
-    const [name, server, race] = key.split('||');
-    if (!selectedServers.includes(server) || !selectedRaces.includes(race)) continue;
-    
-    const startScore = scores[key][dateStart] || 0;
-    const endScore = scores[key][dateEnd] || 0;
+        if (p.startScore === 0 && p.endScore === 0) continue;
 
-    if (!playerServerMap[name + '||' + server]) {
-        playerServerMap[name + '||' + server] = {
-            name: name,
-            server: server,
-            display_server: scores[key].display_server,
-            races: {},
-            startScore: 0,
-            endScore: 0
-        };
+        // Race affichée
+        let raceDisplay = p.races.start || p.races.end || '';
+        if (p.races.start && p.races.end && p.races.start !== p.races.end) {
+            raceDisplay = p.races.start + ' → ' + p.races.end;
+        }
+
+        // Position affichée
+        let posDisplay = '';
+        if (p.positions.start && p.positions.end && p.positions.start !== p.positions.end) {
+            posDisplay = `${p.positions.start} → ${p.positions.end}`;
+        } else if (p.positions.end) {
+            posDisplay = `${p.positions.end}`;
+        } else if (p.positions.start) {
+            posDisplay = `${p.positions.start}`;
+        }
+
+        const prog = p.endScore - p.startScore;
+
+        tableData.push({
+            name: p.name,
+            display_server: p.display_server,
+            race: raceDisplay,
+            startScore: p.startScore,
+            endScore: p.endScore,
+            prog: prog,
+            position: posDisplay
+        });
     }
-    // enregistrer la race de début et de fin
-    if (scores[key][dateStart] !== undefined) playerServerMap[name + '||' + server].races.start = race;
-    if (scores[key][dateEnd] !== undefined) playerServerMap[name + '||' + server].races.end = race;
-
-    playerServerMap[name + '||' + server].startScore += startScore;
-    playerServerMap[name + '||' + server].endScore += endScore;
-}
-
-// Construire tableData
-for (let key in playerServerMap) {
-    const p = playerServerMap[key];
-    let raceDisplay = p.races.start || p.races.end || '';
-    if (p.races.start && p.races.end && p.races.start !== p.races.end) {
-        raceDisplay = p.races.start + ' → ' + p.races.end;
-    }
-    const prog = p.endScore - p.startScore;
-    tableData.push({
-        name: p.name,
-        display_server: p.display_server,
-        race: raceDisplay,
-        startScore: p.startScore,
-        endScore: p.endScore,
-        prog: prog
-    });
-}
 
     const dt = $('#progressTable').DataTable();
     dt.clear();
     dt.rows.add(
         tableData.map(p => [
             `<span style="color:${p.startScore===0 ? 'lime' : p.endScore===0 ? 'red' : 'inherit'}">${p.name}</span>`,
+            p.position,
             p.display_server,
             p.race,
             p.startScore,
@@ -341,7 +357,7 @@ function updateRaceStats() {
     const topN = dt.page.len();
     rowsData = rowsData.slice(0, topN);
     rowsData.forEach(row => {
-        const race = row[2];
+        const race = row[3]; // colonne Race
         raceCounts[race] = (raceCounts[race] || 0) + 1;
         total++;
     });
@@ -357,7 +373,7 @@ $(document).ready(function() {
     const dt = $('#progressTable').DataTable({
         "pageLength": 10,
         "lengthMenu": [10,25,50,100,200],
-        "order": [[5,"desc"]]
+        "order": [[6,"desc"]] // trier par progression points
     });
 
     document.querySelectorAll('.server-filter, .race-filter').forEach(el => {
@@ -379,6 +395,7 @@ $(document).ready(function() {
 </body>
 </html>
 """
+
 
 # =====================
 # WRITE FILE
