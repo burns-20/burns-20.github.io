@@ -281,7 +281,7 @@ function updateProgression() {
     for (let key in playerServerMap) {
         const p = playerServerMap[key];
 
-        if (p.startScore === 0 && p.endScore === 0) continue;
+        if (p.startScore === 0) continue;
 
         // Race affichée
         let raceDisplay = p.races.start || p.races.end || '';
