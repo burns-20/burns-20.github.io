@@ -180,6 +180,7 @@ function updateProgression() {
 
     allData.forEach(p => {
         if (!selectedServers.includes(p.server)) return;
+        if (!selectedRaces.includes(p.race)) return;
 
         const key = p.name + '||' + p.server;
         if (!playerServerMap[key]) {
