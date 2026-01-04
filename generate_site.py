@@ -115,6 +115,11 @@ h1, h2, h3 {{
 .filters {{
     flex:1;
 }}
+.button-group button.active {{
+    background-color: #f5c542;
+    color: #111;
+    font-weight: bold;
+}}
 .filters label {{
     margin-right: 15px;
     cursor: pointer;
@@ -207,8 +212,9 @@ html += "</select>"
 # boutons presets 7/30 jours
 html += """
 <div class="button-group">
-<button id="last7">7 derniers jours</button>
-<button id="last30">30 derniers jours</button>
+<button id="alltime">Depuis le début</button>
+<button id="last30">Un mois</button>
+<button id="last7">Une semaine</button>
 </div>
 </div>
 
@@ -330,6 +336,16 @@ function updateProgression() {
     updateRaceStats();
 }
 
+function setActiveMode(mode) {
+    ['last7','last30','alltime'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+    });
+
+    if (mode) {
+        document.getElementById(mode).classList.add('active');
+    }
+}
+
 function applyPreset(days) {
     const end = dates_sorted[dates_sorted.length - 1];
     const endDate = new Date(end);
@@ -348,6 +364,14 @@ function applyPreset(days) {
     document.getElementById('date_start').value = closestStart;
     document.getElementById('date_end').value = end;
     updateProgression();
+    setActiveMode(days === 7 ? 'last7' : 'last30');
+}
+
+function applyAllTime() {
+    document.getElementById('date_start').value = dates_sorted[0];
+    document.getElementById('date_end').value = dates_sorted[dates_sorted.length - 1];
+    updateProgression();
+    setActiveMode('alltime');
 }
 
 function updateRaceStats() {
@@ -380,16 +404,24 @@ $(document).ready(function() {
     document.querySelectorAll('.server-filter, .race-filter').forEach(el => {
         el.addEventListener('change', updateProgression);
     });
-    document.getElementById('date_start').addEventListener('change', updateProgression);
-    document.getElementById('date_end').addEventListener('change', updateProgression);
+    document.getElementById('date_start').addEventListener('change', () => {
+     setActiveMode(null);
+     updateProgression();
+    });
+    document.getElementById('date_end').addEventListener('change', () => {
+     setActiveMode(null);
+     updateProgression();
+    });
     document.getElementById('last7').addEventListener('click', ()=> applyPreset(7));
     document.getElementById('last30').addEventListener('click', ()=> applyPreset(30));
+    document.getElementById('alltime').addEventListener('click', applyAllTime);
 
     $('#progressTable').on('draw.dt', function () {
         updateRaceStats();
     });
 
-    updateProgression();
+    applyPreset(7);
+    setActiveMode('last7');
 });
 </script>
 
