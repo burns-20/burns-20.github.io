@@ -95,7 +95,7 @@ html = f"""
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Classements BloodWars</title>
+<title>Classement Bloodwars</title>
 <style>
 body {{
     font-family: Arial, sans-serif;
@@ -155,14 +155,24 @@ th.sorting:after, th.sorting_asc:after, th.sorting_desc:after {{
 }}
 .button-group button {{
     margin-right: 10px;
-    padding: 5px 10px;
+    padding: 4px 8px;
     cursor: pointer;
 }}
+.filter-line {{
+    display: flex;
+    align-items: flex-end; /* 👈 clé ici */
+    gap: 8px;
+    margin-top: 6px;
+}}
+
 .dataTables_length select {{
     background-color: #222 !important;
     color: #eee !important;
     border: 1px solid #444 !important;
     padding: 2px 4px;
+}}
+.dataTables_length {{
+    display: none;
 }}
 </style>
 
@@ -173,7 +183,7 @@ th.sorting:after, th.sorting_asc:after, th.sorting_desc:after {{
 </head>
 <body>
 
-<h1>Classement Bloodwars</h1>
+<h1>Classement Progression Bloodwars</h1>
 
 <div class="top-filters">
   <div class="filters">
@@ -188,7 +198,7 @@ for s in ["R1", "R2", "R4", "R3", "R7", "R14"]:
 </label>
 """
 
-html += "<br><strong>Races :</strong><br>"
+html += "<br><br><strong>Races :</strong><br>"
 races = sorted(list({p["race"] for p in all_players}))
 for r in races:
     html += f"""
@@ -198,32 +208,56 @@ for r in races:
 </label>
 """
 
-# date selection + presets
-html += "<br><br><strong>Durée / Dates :</strong><br>"
-html += "De : <select id='date_start'>"
+# date selection (une seule ligne)
+html += """
+<br><br>
+<div class="filter-line">
+<strong>Dates </strong>
+du <select id='date_start'>
+"""
 for d in dates_sorted:
     html += f"<option value='{d}'>{d}</option>"
-html += "</select> À : <select id='date_end'>"
+html += """
+</select>
+au <select id='date_end'>
+"""
+
 for d in dates_sorted:
     selected = "selected" if d == dates_sorted[-1] else ""
     html += f"<option value='{d}' {selected}>{d}</option>"
-html += "</select>"
 
-# boutons presets 7/30 jours
 html += """
-<div class="button-group">
-<button id="alltime">Depuis le début</button>
-<button id="last30">Un mois</button>
-<button id="last7">Une semaine</button>
+</select>
+</div>
+"""
+
+# boutons presets (ligne séparée)
+html += """
+<div class="filter-line">
+<strong>Durée :</strong>
+<span class="button-group">
+    <button id="alltime">Globale</button>
+    <button id="last30">Un mois</button>
+    <button id="last7">Une semaine</button>
+</span>
 </div>
 </div>
+
 
   <div id="raceStats">
     <!-- Stats races ici -->
   </div>
 </div>
 
-<h2>Tableau de progression globale</h2>
+<div class="button-group" id="pageSizeButtons" style="margin-bottom:10px;">
+    <strong>Nombre de joueurs :</strong><br>
+    <button data-size="10" class="active">10</button>
+    <button data-size="25">25</button>
+    <button data-size="50">50</button>
+    <button data-size="100">100</button>
+    <button data-size="200">200</button>
+</div>
+
 <table id="progressTable" class="display">
 <thead>
 <tr>
@@ -346,6 +380,21 @@ function setActiveMode(mode) {
     }
 }
 
+function setActivePageSize(size) {
+    document.querySelectorAll('#pageSizeButtons button').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.size == size) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+function applyPageSize(size) {
+    const dt = $('#progressTable').DataTable();
+    dt.page.len(size).draw();
+    setActivePageSize(size);
+}
+
 function applyPreset(days) {
     const end = dates_sorted[dates_sorted.length - 1];
     const endDate = new Date(end);
@@ -398,31 +447,48 @@ $(document).ready(function() {
     const dt = $('#progressTable').DataTable({
         "pageLength": 10,
         "lengthMenu": [10,25,50,100,200],
-        "order": [[6,"desc"]] // trier par progression points
+        "order": [[6,"desc"]]
     });
 
+    // Boutons nombre de joueurs
+    document.querySelectorAll('#pageSizeButtons button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            applyPageSize(parseInt(btn.dataset.size));
+        });
+    });
+
+    // Filtres serveurs & races
     document.querySelectorAll('.server-filter, .race-filter').forEach(el => {
         el.addEventListener('change', updateProgression);
     });
+
+    // Sélecteurs de dates
     document.getElementById('date_start').addEventListener('change', () => {
-     setActiveMode(null);
-     updateProgression();
+        setActiveMode(null);
+        updateProgression();
     });
+
     document.getElementById('date_end').addEventListener('change', () => {
-     setActiveMode(null);
-     updateProgression();
+        setActiveMode(null);
+        updateProgression();
     });
-    document.getElementById('last7').addEventListener('click', ()=> applyPreset(7));
-    document.getElementById('last30').addEventListener('click', ()=> applyPreset(30));
+
+    // Boutons presets
+    document.getElementById('last7').addEventListener('click', () => applyPreset(7));
+    document.getElementById('last30').addEventListener('click', () => applyPreset(30));
     document.getElementById('alltime').addEventListener('click', applyAllTime);
 
+    // Stats races à chaque redraw
     $('#progressTable').on('draw.dt', function () {
         updateRaceStats();
     });
 
+    // État initial
     applyPreset(7);
     setActiveMode('last7');
+    setActivePageSize(10);
 });
+
 </script>
 
 </body>
