@@ -183,7 +183,7 @@ th.sorting:after, th.sorting_asc:after, th.sorting_desc:after {{
 </head>
 <body>
 
-<h1>Classement Progression Bloodwars</h1>
+<h1>Progressions Bloodwars</h1>
 
 <div class="top-filters">
   <div class="filters">
