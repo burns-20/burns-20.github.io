@@ -160,7 +160,7 @@ th.sorting:after, th.sorting_asc:after, th.sorting_desc:after {{
 }}
 .filter-line {{
     display: flex;
-    align-items: flex-end; /* 👈 clé ici */
+    align-items: flex-end;
     gap: 8px;
     margin-top: 6px;
 }}
@@ -208,7 +208,7 @@ for r in races:
 </label>
 """
 
-# date selection (une seule ligne)
+# -------------------- Dates --------------------
 html += """
 <br><br>
 <div class="filter-line">
@@ -221,17 +221,12 @@ html += """
 </select>
 au <select id='date_end'>
 """
-
 for d in dates_sorted:
     selected = "selected" if d == dates_sorted[-1] else ""
     html += f"<option value='{d}' {selected}>{d}</option>"
+html += "</select></div>"
 
-html += """
-</select>
-</div>
-"""
-
-# boutons presets (ligne séparée)
+# -------------------- Presets --------------------
 html += """
 <div class="filter-line">
 <strong>Durée :</strong>
@@ -239,14 +234,14 @@ html += """
     <button id="alltime">Globale</button>
     <button id="last30">Un mois</button>
     <button id="last7">Une semaine</button>
+    <button id="last1">Un jour</button>
 </span>
 </div>
 </div>
 
-
-  <div id="raceStats">
+<div id="raceStats">
     <!-- Stats races ici -->
-  </div>
+</div>
 </div>
 
 <div class="button-group" id="pageSizeButtons" style="margin-bottom:10px;">
@@ -371,7 +366,7 @@ function updateProgression() {
 }
 
 function setActiveMode(mode) {
-    ['last7','last30','alltime'].forEach(id => {
+    ['last1','last7','last30','alltime'].forEach(id => {
         document.getElementById(id).classList.remove('active');
     });
 
@@ -413,7 +408,10 @@ function applyPreset(days) {
     document.getElementById('date_start').value = closestStart;
     document.getElementById('date_end').value = end;
     updateProgression();
-    setActiveMode(days === 7 ? 'last7' : 'last30');
+    if (days === 1) setActiveMode('last1');
+    else if (days === 7) setActiveMode('last7');
+    else if (days === 30) setActiveMode('last30');
+
 }
 
 function applyAllTime() {
@@ -450,6 +448,22 @@ $(document).ready(function() {
         "order": [[6,"desc"]]
     });
 
+    // Rendre la barre de recherche native capable de gérer le | comme OR (regex)
+    $('#progressTable_filter input[type="search"]').off()  // retire l'écoute par défaut
+    .on('input', function() {
+        const val = this.value.trim();
+        const dt = $('#progressTable').DataTable();
+        if (val.length === 0) {
+            dt.search('', false, false, true).draw();
+        } else {
+            // search(val, regex=true, smart=false, caseInsensitive=true)
+            dt.search(val, true, false, true).draw();
+        }
+    });
+
+
+    $('#progressTable_filter').prepend('<div style="color:#aaa; font-size:0.85em; margin-bottom:2px;">Recherche multiple avec | (ex: Alice|Bob)</div>');
+
     // Boutons nombre de joueurs
     document.querySelectorAll('#pageSizeButtons button').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -476,6 +490,7 @@ $(document).ready(function() {
     // Boutons presets
     document.getElementById('last7').addEventListener('click', () => applyPreset(7));
     document.getElementById('last30').addEventListener('click', () => applyPreset(30));
+    document.getElementById('last1').addEventListener('click', () => applyPreset(1));
     document.getElementById('alltime').addEventListener('click', applyAllTime);
 
     // Stats races à chaque redraw
@@ -488,13 +503,11 @@ $(document).ready(function() {
     setActiveMode('last7');
     setActivePageSize(10);
 });
-
 </script>
 
 </body>
 </html>
 """
-
 
 # =====================
 # WRITE FILE
