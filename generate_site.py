@@ -361,7 +361,7 @@ function updateProgression() {
             p.prog
         ])
     );
-    dt.draw();
+    dt.draw(false);
     updateRaceStats();
 }
 
