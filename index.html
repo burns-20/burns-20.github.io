@@ -28,6 +28,10 @@ h1, h2, h3 {
     color: #111;
     font-weight: bold;
 }
+.best-prog {
+    color: #f5c542;
+    font-weight: bold;
+}
 .filters label {
     margin-right: 15px;
     cursor: pointer;
@@ -271,6 +275,7 @@ function updateProgression() {
 
         tableData.push({
             name: p.name,
+            server: p.server,  
             display_server: p.display_server,
             race: raceDisplay,
             startScore: p.startScore,
@@ -281,17 +286,28 @@ function updateProgression() {
     }
 
     const dt = $('#progressTable').DataTable();
+    const bestProgByServer = {};
+    tableData.forEach(p => {
+        if (!bestProgByServer[p.server] || p.prog > bestProgByServer[p.server]) {
+            bestProgByServer[p.server] = p.prog;
+        }
+    });
+
     dt.clear();
     dt.rows.add(
-        tableData.map(p => [
-            `<span style="color:${p.startScore===0 ? 'lime' : p.endScore===0 ? 'red' : 'inherit'}">${p.name}</span>`,
-            p.position,
-            p.display_server,
-            p.race,
-            p.startScore,
-            p.endScore,
-            p.prog
-        ])
+        tableData.map(p => {
+            const isBest = p.prog === bestProgByServer[p.server];
+
+            return [
+                `<span class="${isBest ? 'best-prog' : ''}">${p.name}</span>`,
+                p.position,
+                p.display_server,
+                p.race,
+                p.startScore,
+                p.endScore,
+                `<span class="${isBest ? 'best-prog' : ''}">${p.prog}</span>`
+            ];
+        })
     );
     dt.draw(false);
     updateRaceStats();
