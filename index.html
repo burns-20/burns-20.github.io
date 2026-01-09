@@ -5,12 +5,34 @@
 <meta charset="UTF-8">
 <title>Classement Bloodwars</title>
 <style>
+
+:root {
+    --bg: #111;
+    --text: #eee;
+    --panel: #222;
+    --border: #444;
+    --accent: #f5c542;
+}
+
+body[data-theme="light"] {
+    --bg: #f5f5f5;
+    --text: #111;
+    --panel: #ffffff;
+    --border: #ccc;
+    --accent: #b58900;
+}
+
 body {
     font-family: Arial, sans-serif;
-    background: #111;
-    color: #eee;
+    background: var(--bg);
+    color: var(--text);
     padding: 20px;
 }
+
+h1, h2, h3 {
+    color: var(--accent);
+}
+
 h1, h2, h3 {
     color: #f5c542;
 }
@@ -38,7 +60,7 @@ h1, h2, h3 {
 }
 #raceStats {
     flex:0 0 200px;
-    background:#222;
+    background: var(--panel);
     padding:10px;
     border-radius:5px;
     font-size:0.9em;
@@ -49,12 +71,12 @@ table {
     margin-top: 10px;
 }
 th, td {
-    border: 1px solid #444;
+    border: 1px solid var(--border);
     padding: 6px;
     text-align: left;
 }
 th {
-    background: #222;
+    background: var(--panel);
 }
 th.sorting:after, th.sorting_asc:after, th.sorting_desc:after {
     display: none !important;
@@ -78,9 +100,9 @@ th.sorting:after, th.sorting_asc:after, th.sorting_desc:after {
 }
 
 .dataTables_length select {
-    background-color: #222 !important;
-    color: #eee !important;
-    border: 1px solid #444 !important;
+    background-color: var(--panel) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
     padding: 2px 4px;
 }
 .dataTables_length {
@@ -96,6 +118,9 @@ th.sorting:after, th.sorting_asc:after, th.sorting_desc:after {
 <body>
 
 <h1>Progressions Bloodwars</h1>
+<button id="themeToggle" style="float:right; margin-top:-40px;">
+    ☀️ Mode clair
+</button>
 
 <div class="top-filters">
   <div class="filters">
@@ -451,6 +476,26 @@ $(document).ready(function() {
     setActiveMode('last7');
     setActivePageSize(10);
 });
+
+function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+
+    const btn = document.getElementById('themeToggle');
+    btn.textContent = theme === 'dark'
+        ? '☀️ Mode clair'
+        : '🌙 Mode sombre';
+}
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+    const current = document.body.getAttribute('data-theme') || 'dark';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+});
+
+// Appliquer le thème sauvegardé au chargement
+const savedTheme = localStorage.getItem('theme') || 'dark';
+applyTheme(savedTheme);
+
 </script>
 
 </body>
