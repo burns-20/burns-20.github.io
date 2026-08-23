@@ -103,7 +103,7 @@ SERVERS = [
 # CSV
 # =====================
 
-CSV_PATH = r"C:\Users\Julien\Desktop\bots\burns-20.github.io\bloodwars_classement.csv"
+CSV_PATH = r"C:\Users\burns\Desktop\bots\burns-20.github.io\bloodwars_classement.csv"
 TODAY = date.today().isoformat()
 
 # =====================
