@@ -396,9 +396,9 @@ function updateProgression() {
                 p.position,
                 p.display_server,
                 p.race,
-                p.startScore,
-                p.endScore,
-                `<span class="${isBest ? 'best-prog' : ''}">${p.prog}</span>`
+                p.startScore.toLocaleString('fr-FR'),
+                p.endScore.toLocaleString('fr-FR'),
+                `<span class="${isBest ? 'best-prog' : ''}">${p.prog.toLocaleString('fr-FR')}</span>`
             ];
         })
     );
